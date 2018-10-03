@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+    db:
+      build:
+        context: ./mariadb
+      volumes:
+          - "./.data/db:/var/lib/mysql"
+          - "./logs/mariadb:/var/log/mysql"
+      environment:
+          MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+          MYSQL_DATABASE: ${MYSQL_DATABASE}
+          MYSQL_USER: ${MYSQL_USER}
+          MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      networks:
+        - default
+    php-fpm:
+      build:
+          context: ./php7-fpm
+          args:
+              TIMEZONE: ${TIMEZONE}
+      volumes:
+          - ${APP_PATH}:/var/www/app
+      environment:
+          DB_HOST: db
+          DB_PORT: 3306
+          DB_DATABASE: ${MYSQL_DATABASE}
+          DB_USERNAME: ${MYSQL_USER}
+          DB_PASSWORD: ${MYSQL_PASSWORD}
+      depends_on:
+        - db
+      networks:
+        - default
+    nginx:
+      build:
+        context: ./nginx
+        args:
+          - 'php-fpm'
+          - '9000'
+      volumes:
+        - ${APP_PATH}:/var/www/app
+        - ./logs/nginx/:/var/log/nginx
+      ports:
+        - "80:80"
+        - "443:443"
+      depends_on:
+        - php-fpm
+      networks:
+        - default
+networks:
+  default:
+    driver: bridge
