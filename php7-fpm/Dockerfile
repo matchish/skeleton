@@ -26,6 +26,10 @@ RUN apt-get update && apt-get install -y procps
 
 RUN usermod -u 1000 www-data
 
+WORKDIR /var/www/app
+RUN chown -R www-data:www-data /var/www/app
 USER www-data
 
-WORKDIR /var/www
+RUN git clone https://github.com/laravel/laravel.git .
+
+RUN composer install
